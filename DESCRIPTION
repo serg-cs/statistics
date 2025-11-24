@@ -1,0 +1,18 @@
+Package: statistics
+Type: Package
+Title: Funciones básicas en español para tus clases
+Version: 0.1.0
+Authors@R: c(person(given = "Sergio", family = "CS", role = c("aut","cre"), email = "serg-cs@uma.es"),
+             person(given = "Tu", family = "Nombre", role = c("aut","cre"), email = "tu@email.com"),
+             person(given = "Tu", family = "Nombre", role = c("aut","cre"), email = "tu@email.com"),
+             person(given = "Tu", family = "Nombre", role = c("aut","cre"), email = "tu@email.com"))
+Description: Colección de funciones con nombres en español para facilitar a los alumnos
+    el uso de R en clase: estadísticas descriptivas, normalización, regresión,
+    correlación y gráficos rápidos. Incluye generador de datos de ejemplo.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.5.0)
+Imports: stats, graphics
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.0
