@@ -1,9 +1,9 @@
-#' statistics: Funciones básicas en español para docencia
+#' statistics: Basic statistical functions for teaching
 #'
-#' Conjunto de utilidades con nombres en español para facilitar a los alumnos
-#' el uso de R sin memorizar de golpe las funciones en inglés. Incluye
-#' funciones de estadística descriptiva, transformación, correlación, regresión
-#' y gráficos simples, además de un generador de datos de ejemplo.
+#' Collection of essential functions to help students learn statistics with R
+#' without memorizing English function names all at once. Includes
+#' descriptive statistics, normalization, standardization, correlation,
+#' regression, and simple plotting functions, plus an example data generator.
 #'
 #' @docType package
 #' @name statistics
