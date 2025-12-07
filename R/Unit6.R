@@ -407,3 +407,200 @@ get_expected_binomial_counts <- function(raw_data, size = NULL) {
   # 4. Return ONLY the Expected Counts Vector
   return(probs * N)
 }
+#' Confidence Interval for the Mean of a Normal Distribution
+#'
+#' Calculates the (1-alpha) confidence interval for the population mean mu.
+#' Handles three cases based on inputs:
+#' 1. Known Variance: Uses Normal distribution (Z).
+#' 2. Unknown Variance, Large Sample (n > 30): Uses Normal approximation (Z).
+#' 3. Unknown Variance, Small Sample (n <= 30): Uses Student's t-distribution.
+#'
+#' @param mean Sample mean (x_bar).
+#' @param sd Standard deviation (sigma if known, s if unknown).
+#' @param n Sample size.
+#' @param variance_known Logical. TRUE if 'sd' is the population sigma. FALSE if 'sd' is sample s.
+#' @param alpha Significance level (default 0.05 for 95% confidence).
+#' @return A numeric vector of length 2: c(lower_bound, upper_bound).
+#' @export
+ci_mean_normal <- function(mean, sd, n, variance_known = FALSE, alpha = 0.05) {
+  # Validation
+  stopifnot(n > 0, sd > 0, alpha > 0, alpha < 1)
+  
+  # Determine Critical Value and Standard Error
+  if (variance_known) {
+    # Case 1: Known Variance -> Z-distribution
+    crit_val <- qnorm(1 - alpha / 2)
+  } else {
+    if (n > 30) {
+      # Case 2: Unknown Var, Large Sample -> Z-distribution approx
+      crit_val <- qnorm(1 - alpha / 2)
+    } else {
+      # Case 3: Unknown Var, Small Sample -> T-distribution
+      crit_val <- qt(1 - alpha / 2, df = n - 1)
+    }
+  }
+  
+  # Margin of Error
+  margin_error <- crit_val * (sd / sqrt(n))
+  
+  # Interval
+  return(c(lower = mean - margin_error, upper = mean + margin_error))
+}
+#' Confidence Interval for the Variance of a Normal Distribution
+#'
+#' Calculates the (1-alpha) confidence interval for the population variance sigma^2.
+#' Uses the Chi-Square distribution.
+#' Note: The interval is not symmetric around the sample variance.
+#'
+#' @param s2 Sample quasi-variance (s^2).
+#' @param n Sample size.
+#' @param alpha Significance level (default 0.05).
+#' @return A numeric vector of length 2: c(lower_bound, upper_bound).
+#' @export
+ci_variance_normal <- function(s2, n, alpha = 0.05) {
+  stopifnot(n > 1, s2 >= 0)
+  
+  df <- n - 1
+  
+  # Critical Values from Chi-Square
+  # Lower limit uses the Upper Tail critical value (denominator is larger)
+  # Upper limit uses the Lower Tail critical value (denominator is smaller)
+  chi_upper <- qchisq(1 - alpha / 2, df = df)
+  chi_lower <- qchisq(alpha / 2, df = df)
+  
+  lower <- (df * s2) / chi_upper
+  upper <- (df * s2) / chi_lower
+  
+  return(c(lower = lower, upper = upper))
+}
+#' Confidence Interval for a Binomial Proportion
+#'
+#' Calculates the (1-alpha) confidence interval for the population proportion p.
+#' Assumes large sample size (Normal approximation).
+#' @param p_hat Sample proportion (between 0 and 1).
+#' @param n Sample size.
+#' @param alpha Significance level (default 0.05).
+#' @return A numeric vector of length 2.
+#' @export
+ci_proportion_binomial <- function(p_hat, n, alpha = 0.05) {
+  stopifnot(p_hat >= 0, p_hat <= 1, n > 0)
+  
+  # Critical Value (Z)
+  z_crit <- qnorm(1 - alpha / 2)
+  
+  # Standard Error
+  se <- sqrt((p_hat * (1 - p_hat)) / n)
+  
+  margin_error <- z_crit * se
+  
+  # Clamp results to [0, 1] as probabilities cannot exceed these
+  lower <- max(0, p_hat - margin_error)
+  upper <- min(1, p_hat + margin_error)
+  
+  return(c(lower = lower, upper = upper))
+}
+#' Confidence Interval for Difference of Two Means
+#'
+#' Calculates the CI for (mu1 - mu2). Handles known/unknown variances, 
+#' large/small samples, and equal/unequal variance assumptions.
+#' @param mean1,mean2 Sample means.
+#' @param sd1,sd2 Standard deviations (sigma or s).
+#' @param n1,n2 Sample sizes.
+#' @param variance_known Logical. If TRUE, sd1/sd2 are population sigmas.
+#' @param var_equal Logical. Only used if variance_known=FALSE and small samples. 
+#'        Assumes sigma1^2 = sigma2^2 (Pooled Variance).
+#' @param alpha Significance level.
+#' @export
+ci_diff_means <- function(mean1, mean2, sd1, sd2, n1, n2, 
+                          variance_known = FALSE, var_equal = FALSE, alpha = 0.05) {
+  
+  diff_mean <- mean1 - mean2
+  
+  if (variance_known) {
+    # [cite_start]Case 1: Known Variances (Z-dist) [cite: 286]
+    crit_val <- qnorm(1 - alpha/2)
+    se <- sqrt(sd1^2/n1 + sd2^2/n2)
+    
+  } else {
+    # Unknown Variances
+    if (n1 + n2 > 30) {
+      # [cite_start]Case 2: Large Samples (Z-dist approx) [cite: 286]
+      crit_val <- qnorm(1 - alpha/2)
+      se <- sqrt(sd1^2/n1 + sd2^2/n2)
+      
+    } else {
+      # Small Samples (T-dist)
+      if (var_equal) {
+        # [cite_start]Case 3: Equal Variances (Pooled) [cite: 286, 288]
+        df <- n1 + n2 - 2
+        crit_val <- qt(1 - alpha/2, df = df)
+        
+        # Pooled Variance Calculation
+        sp_sq <- ((n1 - 1)*sd1^2 + (n2 - 1)*sd2^2) / df
+        se <- sqrt(sp_sq) * sqrt(1/n1 + 1/n2)
+        
+      } else {
+        # [cite_start]Case 4: Unequal Variances (Welch) [cite: 290, 291]
+        # Welch-Satterthwaite Degrees of Freedom
+        num <- (sd1^2/n1 + sd2^2/n2)^2
+        den <- ((sd1^2/n1)^2 / (n1 + 1)) + ((sd2^2/n2)^2 / (n2 + 1)) 
+        # Note: Slide 21 uses (n+1) in denom? Standard Welch uses (n-1). 
+        # [cite_start]Checking Slide 21[cite: 291]: It says n1+1 and n2+1. 
+        # CAUTION: Standard R 't.test' uses (n-1). I will follow the Slide exactly.
+        f <- (num / den) - 2 
+        
+        crit_val <- qt(1 - alpha/2, df = f)
+        se <- sqrt(sd1^2/n1 + sd2^2/n2)
+      }
+    }
+  }
+  
+  margin <- crit_val * se
+  return(c(lower = diff_mean - margin, upper = diff_mean + margin))
+}
+#' Confidence Interval for Ratio of Variances
+#'
+#' Calculates the (1-alpha) CI for the ratio sigma1^2 / sigma2^2.
+#' Uses the F-
+#' distribution.
+#'
+#' @param s1_sq,s2_sq Sample quasi-variances (s^2).
+#' @param n1,n2 Sample sizes.
+#' @param alpha Significance level.
+#' @export
+ci_ratio_variances <- function(s1_sq, s2_sq, n1, n2, alpha = 0.05) {
+  stopifnot(s1_sq > 0, s2_sq > 0, n1 > 1, n2 > 1)
+  
+  ratio <- s1_sq / s2_sq
+  df1 <- n1 - 1
+  df2 <- n2 - 1
+  
+  # F Critical Values
+  # Formula: Lower = Ratio / F(upper), Upper = Ratio / F(lower)
+  f_upper <- qf(1 - alpha/2, df1 = df1, df2 = df2)
+  f_lower <- qf(alpha/2, df1 = df1, df2 = df2)
+  
+  return(c(lower = ratio / f_upper, upper = ratio / f_lower))
+}
+#' Confidence Interval for Difference of Proportions
+#'
+#' Calculates the (1-alpha) CI for (p1 - p2).
+#' Assumes large samples (Normal approximation).
+#' @param p1,p2 Sample proportions.
+#' @param n1,n2 Sample sizes.
+#' @param alpha Significance level.
+#' @export
+ci_diff_proportions <- function(p1, p2, n1, n2, alpha = 0.05) {
+  # Validation for large sample assumption mentioned in slide
+  if (n1 + n2 <= 30) warning("Sample sum <= 30. Normal approximation may be inaccurate.")
+  
+  diff_p <- p1 - p2
+  crit_val <- qnorm(1 - alpha/2)
+  
+  # [cite_start]Standard Error [cite: 303]
+  se <- sqrt( (p1*(1-p1)/n1) + (p2*(1-p2)/n2) )
+  
+  margin <- crit_val * se
+  
+  return(c(lower = diff_p - margin, upper = diff_p + margin))
+}
