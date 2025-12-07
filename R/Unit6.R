@@ -1,0 +1,409 @@
+#' Sample Mean Distribution (Infinite Population / With Replacement)
+#'
+#' Calculates the density or cumulative probability for the sample mean,
+#' assuming an infinite population or sampling with replacement.
+#'
+#' Under these conditions, the standard deviation of the sample mean (Standard Error)
+#' is calculated as \eqn{\sigma / \sqrt{n}}.
+#'
+#' @param x The sample mean value to evaluate (quantile).
+#' @param mu Population mean (numeric scalar).
+#' @param sigma Population standard deviation (numeric scalar, must be > 0).
+#' @param n Sample size (numeric scalar, must be > 0).
+#' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(X <= x)).
+#' @return Probability density or cumulative probability.
+#' @export
+sample_mean_infinite_population <- function(x, mu, sigma, n, type = c("density", "cumulative")) {
+  # 1. Validation
+  type <- match.arg(type)
+  stopifnot(is.numeric(x))
+  stopifnot(is.numeric(mu), length(mu) == 1)
+  stopifnot(is.numeric(sigma), length(sigma) == 1, sigma > 0)
+  stopifnot(is.numeric(n), length(n) == 1, n > 0)
+  
+  # 2. Calculate Standard Error (SE)
+  # For infinite population: SE = sigma / sqrt(n)
+  std_error <- sigma / sqrt(n)
+  
+  # 3. Calculation using Normal Distribution with adjusted SD
+  if (type == "density") {
+    stats::dnorm(x, mean = mu, sd = std_error)
+  } else {
+    stats::pnorm(x, mean = mu, sd = std_error)
+  }
+}
+
+#' Sample Mean Distribution (Finite Population / Without Replacement)
+#'
+#' Calculates the density or cumulative probability for the sample mean,
+#' assuming a finite population of size N sampled without replacement.
+#'
+#' This applies the Finite Population Correction Factor (FPCF).
+#' The Standard Error is calculated as: \eqn{\frac{\sigma}{\sqrt{n}} \times \sqrt{\frac{N-n}{N-1}}}.
+#'
+#' @param x The sample mean value to evaluate (quantile).
+#' @param mu Population mean (numeric scalar).
+#' @param sigma Population standard deviation (numeric scalar, must be > 0).
+#' @param n Sample size (numeric scalar, must be > 0).
+#' @param N Population size (numeric scalar, must be > n).
+#' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(X <= x)).
+#' @return Probability density or cumulative probability.
+#' @export
+sample_mean_finite_population <- function(x, mu, sigma, n, N, type = c("density", "cumulative")) {
+  # 1. Validation
+  type <- match.arg(type)
+  stopifnot(is.numeric(x))
+  stopifnot(is.numeric(mu), length(mu) == 1)
+  stopifnot(is.numeric(sigma), length(sigma) == 1, sigma > 0)
+  stopifnot(is.numeric(n), length(n) == 1, n > 0)
+  stopifnot(is.numeric(N), length(N) == 1)
+  
+  # Logical constraint: Sample size cannot exceed Population size in this context
+  stopifnot(n <= N)
+  
+  # 2. Calculate Standard Error (SE) with Correction Factor
+  # Base SE
+  base_se <- sigma / sqrt(n)
+  
+  # Finite Population Correction Factor: sqrt((N-n)/(N-1))
+  # If N is very large, this factor approaches 1.
+  if (N > 1) {
+    correction_factor <- sqrt((N - n) / (N - 1))
+  } else {
+    correction_factor <- 0 # Edge case handling if N=1 (though usually N >> n)
+  }
+  
+  adjusted_se <- base_se * correction_factor
+  
+  # 3. Calculation
+  if (type == "density") {
+    stats::dnorm(x, mean = mu, sd = adjusted_se)
+  } else {
+    stats::pnorm(x, mean = mu, sd = adjusted_se)
+  }
+}
+
+#' Sample Quasi-Variance Distribution (Chi-Square)
+#'
+#' Calculates the density or cumulative probability for the Sample Quasi-Variance ($S^2$).
+#'
+#' Unlike the sample mean, the sample variance does not follow a normal distribution.
+#' Instead, the quantity \eqn{\frac{(n-1)S^2}{\sigma^2}} follows a Chi-Square distribution
+#' with \eqn{n-1} degrees of freedom.
+#'
+#' This function automatically handles the transformation from the raw variance value ($S^2$)
+#' to the Chi-Square statistic.
+#'
+#' @param x The sample quasi-variance value to evaluate (must be >= 0).
+#' @param sigma Population standard deviation (numeric scalar, must be > 0).
+#' @param n Sample size (numeric scalar, must be > 1).
+#' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(S^2 <= x)).
+#' @return Probability density or cumulative probability.
+#' @export
+sample_quasi_variance_distribution <- function(x, sigma, n, type = c("density", "cumulative")) {
+  # 1. Validation
+  type <- match.arg(type)
+  stopifnot(is.numeric(x))
+  stopifnot(is.numeric(sigma), length(sigma) == 1, sigma > 0)
+  stopifnot(is.numeric(n), length(n) == 1, n > 1)
+  
+  # Variance cannot be negative
+  if (any(x < 0)) warning("Provided variance 'x' contains negative values, which are impossible.")
+  
+  # 2. Calculate Degrees of Freedom
+  df <- n - 1
+  
+  # 3. Transform S^2 to Chi-Square Statistic
+  # Formula: Chi2 = (n-1) * S^2 / sigma^2
+  chi_sq_stat <- (df * x) / (sigma^2)
+  
+  # 4. Calculation
+  if (type == "density") {
+    # For density, we must apply the Chain Rule (Jacobian) because we are 
+    # transforming the variable.
+    # f_S2(s2) = f_Chi2(y) * |dy/ds2|
+    # where y = (n-1)s2/sigma^2  =>  dy/ds2 = (n-1)/sigma^2
+    
+    jacobian <- df / (sigma^2)
+    stats::dchisq(chi_sq_stat, df = df) * jacobian
+    
+  } else {
+    # For Cumulative, P(S^2 <= x) is exactly P(Chi2 <= transformed_x)
+    stats::pchisq(chi_sq_stat, df = df)
+  }
+}
+
+#' Sample Proportion Distribution (Normal Approximation)
+#'
+#' Calculates the density or cumulative probability for the Sample Proportion ($\hat{p}$),
+#' using the Normal Approximation.
+#'
+#' This approximation is valid when the sample size is large (typically n > 30).
+#' The standard error is calculated as \eqn{\sqrt{\frac{p(1-p)}{n}}}.
+#'
+#' @param x The sample proportion value to evaluate (between 0 and 1).
+#' @param p Population proportion (numeric scalar between 0 and 1).
+#' @param n Sample size (numeric scalar, must be > 0).
+#' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(p_hat <= x)).
+#' @return Probability density or cumulative probability.
+#' @export
+sample_proportion_distribution <- function(x, p, n, type = c("density", "cumulative")) {
+  # 1. Validation
+  type <- match.arg(type)
+  stopifnot(is.numeric(x))
+  stopifnot(is.numeric(p), length(p) == 1, p >= 0, p <= 1)
+  stopifnot(is.numeric(n), length(n) == 1, n > 0)
+  
+  # Warning for small sample sizes where Normal Approx might fail
+  if (n <= 30) warning("Sample size n <= 30. Normal approximation for proportions may be inaccurate.")
+  
+  # 2. Calculate Standard Error (SE)
+  # Formula: sqrt( p * (1-p) / n )
+  std_error <- sqrt((p * (1 - p)) / n)
+  
+  # 3. Calculation using Normal Distribution
+  if (type == "density") {
+    stats::dnorm(x, mean = p, sd = std_error)
+  } else {
+    stats::pnorm(x, mean = p, sd = std_error)
+  }
+}
+#' Variance of the Sample Mean
+#'
+#' Calculates the variance of the sampling distribution of the sample mean.
+#' This value represents how much the sample mean (\eqn{\bar{X}}) is expected to vary
+#' from sample to sample.
+#'
+#' This is NOT the variance of the population ($\sigma^2$), but the variance of the
+#' average of \eqn{n} observations: \eqn{Var(\bar{X}) = \frac{\sigma^2}{n}}.
+#'
+#' If a population size \eqn{N} is provided (finite population), the Finite Population
+#' Correction Factor (FPCF) is applied: \eqn{\frac{N-n}{N-1}}.
+#'
+#' @param sigma_sq Population variance (\eqn{\sigma^2}). Numeric scalar > 0.
+#'                 (If you only have standard deviation, square it: sigma^2).
+#' @param n Sample size. Numeric scalar > 0.
+#' @param N Population size (Optional). If provided, applies the Finite Population Correction.
+#'          Default is Inf (infinite population).
+#' @return The variance of the sample mean (numeric scalar).
+#' @export
+variance_of_sample_mean <- function(sigma_sq, n, N = Inf) {
+  # 1. Validation
+  stopifnot(is.numeric(sigma_sq), length(sigma_sq) == 1, sigma_sq > 0)
+  stopifnot(is.numeric(n), length(n) == 1, n > 0)
+  
+  # 2. Base Calculation (Infinite Population)
+  # Var(X_bar) = sigma^2 / n
+  base_variance <- sigma_sq / n
+  
+  # 3. Finite Population Correction (if N is finite)
+  if (!is.infinite(N)) {
+    stopifnot(is.numeric(N), length(N) == 1)
+    stopifnot(N >= n) # Population must be larger than sample
+    
+    # Correction factor for Variance is ((N-n)/(N-1))
+    # Note: For Standard Error (sigma), it is the sqrt() of this.
+    correction_factor <- (N - n) / (N - 1)
+    
+    return(base_variance * correction_factor)
+  }
+  
+  # 4. Return result for Infinite Population
+  return(base_variance)
+}
+#' Chi-Squared Goodness of Fit Test
+#'
+#' Performs a Chi-Squared test to determine if a dataset follows a specific 
+#' theoretical distribution.
+#'
+#' The test statistic is calculated as:
+[cite_start]#' \eqn{\hat{\chi}^2 = \sum \frac{(o_i - e_i)^2}{e_i}}[cite: 935].
+#'
+#' @param observed A numeric vector of observed frequencies ($o_i$).
+#' @param expected A numeric vector of expected frequencies ($e_i$).
+#' @param lambda The significance level ($\alpha$) for the decision (default 0.05).
+[cite_start]#'   If p-value < lambda, the Null Hypothesis is rejected[cite: 563].
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item \code{statistic}: The calculated Chi-squared value.
+[cite_start]#'   \item \code{df}: Degrees of freedom (calculated as k - 1)[cite: 936].
+#'   \item \code{p_value}: The probability of observing a statistic this extreme.
+#'   \item \code{decision}: Text string indicating whether to reject $H_0$.
+#' }
+#' @note 
+#' If parameters were estimated from the sample to generate the expected counts, 
+#' the degrees of freedom ideally should be \eqn{k - m - 1}, where m is the number 
+[cite_start]#' of estimated parameters[cite: 951]. This function defaults to \eqn{k - 1}.
+#'
+#' @examples
+#' # Example from Slide 74 (Independence Test context)
+#' obs <- c(198, 28, 62, 39, 6, 12, 105, 15, 35)
+#' exp <- c(196.9, 28.2, 62.7, 38.9, 5.5, 12.4, 106.0, 15.1, 33.7)
+#' chi_squared_test(obs, exp, lambda = 0.05)
+#' @export
+chi_squared_test <- function(observed, expected, lambda = 0.05) {
+  
+  # 1. Validation
+  if (length(observed) != length(expected)) {
+    stop("Error: Datasets must have the same length.")
+  }
+  
+  # 2. Normalize Expected Frequencies
+  # [cite_start]Ensure Sum(O) == Sum(E) as required for the calculation[cite: 948].
+  total_obs <- sum(observed)
+  total_exp <- sum(expected)
+  
+  if (abs(total_obs - total_exp) > 1e-6) {
+    expected <- expected * (total_obs / total_exp)
+  }
+  
+  # 3. Calculate Chi-Squared Statistic
+  # Formula: Sum( (O - E)^2 / E )
+  chi_sq_stat <- sum((observed - expected)^2 / expected)
+  
+  # 4. Calculate Degrees of Freedom and P-Value
+  df <- length(observed) - 1
+  p_value <- pchisq(chi_sq_stat, df, lower.tail = FALSE)
+  
+  # 5. Make Decision based on Lambda (Significance Level alpha)
+  reject_null <- p_value < lambda
+  decision_text <- ifelse(reject_null, 
+                          "Reject Null Hypothesis (Significant Difference)", 
+                          "Fail to Reject Null Hypothesis (No Significant Difference)")
+  
+  # 6. Return Result
+  return(list(
+    statistic = chi_sq_stat,
+    df = df,
+    p_value = p_value,
+    significance_level_lambda = lambda,
+    reject_null = reject_null,
+    decision = decision_text
+  ))
+}
+
+#' Get Expected Counts for Normal Distribution
+#'
+#' Fits a Normal Distribution \eqn{N(\mu, \sigma)} to the raw data and calculates
+#' expected frequencies for goodness-of-fit testing.
+#'
+#' Parameters are estimated from the sample:
+#' \itemize{
+[cite_start]#'   \item Mean (\eqn{\mu}) is estimated by \eqn{\bar{X}}[cite: 902].
+[cite_start]#'   \item Standard Deviation (\eqn{\sigma}) is estimated by the sample SD ($S$)[cite: 902].
+#' }
+#'
+#' @param raw_data A numeric vector of raw observations.
+#' @return A numeric vector of expected counts based on histogram bins.
+#' @export
+get_expected_normal_counts <- function(raw_data) {
+  
+  # 1. Clean data and estimate parameters
+  data <- na.omit(raw_data)
+  n <- length(data)
+  mean_est <- mean(data)
+  sd_est <- sd(data)
+  
+  # 2. Determine Bins (using the default 'Sturges' method R uses for histograms)
+  h <- hist(data, plot = FALSE)
+  breaks <- h$breaks
+  n_bins <- length(breaks) - 1
+  
+  # 3. Calculate Probabilities for each bin
+  probs <- numeric(n_bins)
+  
+  for(i in 1:n_bins) {
+    upper <- breaks[i+1]
+    lower <- breaks[i]
+    
+    if (i == 1) {
+      # First bin: -Infinity to Upper
+      probs[i] <- pnorm(upper, mean = mean_est, sd = sd_est)
+    } else if (i == n_bins) {
+      # Last bin: Lower to +Infinity
+      probs[i] <- 1 - pnorm(lower, mean = mean_est, sd = sd_est)
+    } else {
+      # Middle bins
+      probs[i] <- pnorm(upper, mean = mean_est, sd = sd_est) - 
+        pnorm(lower, mean = mean_est, sd = sd_est)
+    }
+  }
+  
+  # 4. Return the Expected Frequencies Vector
+  return(probs * n)
+}
+
+#' Get Expected Counts for Poisson Distribution
+#'
+#' Fits a Poisson Distribution \eqn{P(\lambda)} to the raw data and calculates
+#' expected frequencies.
+#'
+[cite_start]#' The parameter \eqn{\lambda} is estimated using the sample mean \eqn{\bar{X}}[cite: 900].
+#'
+#' @param raw_data A numeric vector of raw observations (integers).
+#' @return A numeric vector of expected counts. The last bin represents
+#'   "observed max value or more" to ensure total probability sums to 1.
+#' @examples
+[cite_start]#' # Matches logic from Slide 69 (Geiger counter example) [cite: 961]
+#' get_expected_poisson_counts(c(0, 1, 1, 2, 2, 2, 3))
+#' @export
+get_expected_poisson_counts <- function(raw_data) {
+  
+  # 1. Setup
+  data <- na.omit(raw_data)
+  N <- length(data)
+  
+  # 2. Estimate Parameter (Lambda)
+  lambda_est <- mean(data)
+  
+  # 3. Determine Range (0 to Max)
+  max_val <- max(data)
+  
+  # 4. Calculate Probabilities
+  # For bins 0 to (max-1), use standard Poisson probability
+  probs <- dpois(0:(max_val - 1), lambda = lambda_est)
+  
+  # For the last bin (max_val), use 1 - sum(others) to capture the "tail"
+  # [cite_start]This corresponds to "max_val or more" (e.g. Slide 69 uses "6 or more")[cite: 962].
+  prob_tail <- 1 - sum(probs)
+  
+  # Combine
+  all_probs <- c(probs, prob_tail)
+  
+  # 5. Return ONLY the Expected Counts Vector
+  return(all_probs * N)
+}
+
+#' Get Expected Counts for Binomial Distribution
+#'
+#' Fits a Binomial Distribution \eqn{B(n, p)} to the raw data and calculates
+#' expected frequencies.
+#'
+[cite_start]#' The parameter \eqn{p} is estimated using the sample proportion[cite: 901].
+#'
+#' @param raw_data A numeric vector of raw observations.
+#' @param size The number of trials (n). If NULL, estimates 'n' as the maximum observed value.
+#' @return A numeric vector of expected counts.
+#' @export
+get_expected_binomial_counts <- function(raw_data, size = NULL) {
+  
+  # 1. Setup
+  data <- na.omit(raw_data)
+  N <- length(data)
+  
+  # 2. Estimate Parameters
+  # If size isn't given, assume max observed value is the number of trials
+  size_est <- if(is.null(size)) max(data) else size
+  prob_est <- mean(data) / size_est
+  
+  # 3. Calculate Probabilities
+  # Binomial is finite (0 to size), so we just calculate all of them directly
+  probs <- dbinom(0:size_est, size = size_est, prob = prob_est)
+  
+  # Normalize slightly just in case of floating point rounding errors
+  probs <- probs / sum(probs)
+  
+  # 4. Return ONLY the Expected Counts Vector
+  return(probs * N)
+}
