@@ -1,3 +1,4 @@
+# --- Descriptive & Basic Utilities ---
 export(mean_na)
 export(variance_na)
 export(sd_na)
@@ -9,8 +10,31 @@ export(linear_regression)
 export(plot_quick)
 export(plot_residuals)
 export(example_data)
+
+# --- Discrete & Standard Distributions ---
 export(discrete_binomial_distribution)
 export(discrete_geometric_distribution)
 export(discrete_poisson_distribution)
 export(standard_normal_distribution)
 export(student_t_distribution)
+
+# --- Sampling Distributions ---
+export(sample_mean_infinite_population)
+export(sample_mean_finite_population)
+export(sample_quasi_variance_distribution)
+export(sample_proportion_distribution)
+export(variance_of_sample_mean)
+
+# --- Goodness of Fit Tests ---
+export(chi_squared_test)
+export(get_expected_normal_counts)
+export(get_expected_poisson_counts)
+export(get_expected_binomial_counts)
+
+# --- Confidence Intervals ---
+export(ci_mean_normal)
+export(ci_variance_normal)
+export(ci_proportion_binomial)
+export(ci_diff_means)
+export(ci_ratio_variances)
+export(ci_diff_proportions)
