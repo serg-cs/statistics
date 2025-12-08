@@ -217,24 +217,24 @@ variance_of_sample_mean <- function(sigma_sq, n, N = Inf) {
 #' theoretical distribution.
 #'
 #' The test statistic is calculated as:
-[cite_start]#' \eqn{\hat{\chi}^2 = \sum \frac{(o_i - e_i)^2}{e_i}}[cite: 935].
+#' \eqn{\hat{\chi}^2 = \sum \frac{(o_i - e_i)^2}{e_i}}[cite: 935].
 #'
 #' @param observed A numeric vector of observed frequencies ($o_i$).
 #' @param expected A numeric vector of expected frequencies ($e_i$).
 #' @param lambda The significance level ($\alpha$) for the decision (default 0.05).
-[cite_start]#'   If p-value < lambda, the Null Hypothesis is rejected[cite: 563].
+#'   If p-value < lambda, the Null Hypothesis is rejected[cite: 563].
 #'
 #' @return A list containing:
 #' \itemize{
 #'   \item \code{statistic}: The calculated Chi-squared value.
-[cite_start]#'   \item \code{df}: Degrees of freedom (calculated as k - 1)[cite: 936].
+#'   \item \code{df}: Degrees of freedom (calculated as k - 1)[cite: 936].
 #'   \item \code{p_value}: The probability of observing a statistic this extreme.
 #'   \item \code{decision}: Text string indicating whether to reject $H_0$.
 #' }
 #' @note 
 #' If parameters were estimated from the sample to generate the expected counts, 
 #' the degrees of freedom ideally should be \eqn{k - m - 1}, where m is the number 
-[cite_start]#' of estimated parameters[cite: 951]. This function defaults to \eqn{k - 1}.
+#' of estimated parameters[cite: 951]. This function defaults to \eqn{k - 1}.
 #'
 #' @examples
 #' # Example from Slide 74 (Independence Test context)
@@ -290,8 +290,8 @@ chi_squared_test <- function(observed, expected, lambda = 0.05) {
 #'
 #' Parameters are estimated from the sample:
 #' \itemize{
-[cite_start]#'   \item Mean (\eqn{\mu}) is estimated by \eqn{\bar{X}}[cite: 902].
-[cite_start]#'   \item Standard Deviation (\eqn{\sigma}) is estimated by the sample SD ($S$)[cite: 902].
+#'   \item Mean (\eqn{\mu}) is estimated by \eqn{\bar{X}}[cite: 902].
+#'   \item Standard Deviation (\eqn{\sigma}) is estimated by the sample SD ($S$)[cite: 902].
 #' }
 #'
 #' @param raw_data A numeric vector of raw observations.
@@ -339,13 +339,13 @@ get_expected_normal_counts <- function(raw_data) {
 #' Fits a Poisson Distribution \eqn{P(\lambda)} to the raw data and calculates
 #' expected frequencies.
 #'
-[cite_start]#' The parameter \eqn{\lambda} is estimated using the sample mean \eqn{\bar{X}}[cite: 900].
+#' The parameter \eqn{\lambda} is estimated using the sample mean \eqn{\bar{X}}[cite: 900].
 #'
 #' @param raw_data A numeric vector of raw observations (integers).
 #' @return A numeric vector of expected counts. The last bin represents
 #'   "observed max value or more" to ensure total probability sums to 1.
 #' @examples
-[cite_start]#' # Matches logic from Slide 69 (Geiger counter example) [cite: 961]
+#' # Matches logic from Slide 69 (Geiger counter example) [cite: 961]
 #' get_expected_poisson_counts(c(0, 1, 1, 2, 2, 2, 3))
 #' @export
 get_expected_poisson_counts <- function(raw_data) {
@@ -380,7 +380,7 @@ get_expected_poisson_counts <- function(raw_data) {
 #' Fits a Binomial Distribution \eqn{B(n, p)} to the raw data and calculates
 #' expected frequencies.
 #'
-[cite_start]#' The parameter \eqn{p} is estimated using the sample proportion[cite: 901].
+#' The parameter \eqn{p} is estimated using the sample proportion[cite: 901].
 #'
 #' @param raw_data A numeric vector of raw observations.
 #' @param size The number of trials (n). If NULL, estimates 'n' as the maximum observed value.
