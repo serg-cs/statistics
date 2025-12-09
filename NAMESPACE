@@ -12,11 +12,11 @@ export(plot_residuals)
 export(example_data)
 
 # --- Discrete & Standard Distributions ---
-export(discrete_binomial_distribution)
-export(discrete_geometric_distribution)
-export(discrete_poisson_distribution)
-export(standard_normal_distribution)
-export(student_t_distribution)
+export(get_discrete_binomial_distribution)
+export(get_discrete_geometric_distribution)
+export(get_discrete_poisson_distribution)
+export(get_standard_normal_distribution)
+export(get_student_t_distribution)
 
 # --- Sampling Distributions ---
 export(sample_mean_infinite_population)
