@@ -13,7 +13,7 @@
 #' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(X <= x)).
 #' @return Probability density or cumulative probability.
 #' @export
-sample_mean_infinite_population <- function(x, mu, sigma, n, type = c("density", "cumulative")) {
+get_sample_mean_infinite_population <- function(x, mu, sigma, n, type = c("density", "cumulative")) {
   # 1. Validation
   type <- match.arg(type)
   stopifnot(is.numeric(x))
@@ -49,7 +49,7 @@ sample_mean_infinite_population <- function(x, mu, sigma, n, type = c("density",
 #' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(X <= x)).
 #' @return Probability density or cumulative probability.
 #' @export
-sample_mean_finite_population <- function(x, mu, sigma, n, N, type = c("density", "cumulative")) {
+get_sample_mean_finite_population <- function(x, mu, sigma, n, N, type = c("density", "cumulative")) {
   # 1. Validation
   type <- match.arg(type)
   stopifnot(is.numeric(x))
@@ -100,7 +100,7 @@ sample_mean_finite_population <- function(x, mu, sigma, n, N, type = c("density"
 #' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(S^2 <= x)).
 #' @return Probability density or cumulative probability.
 #' @export
-sample_quasi_variance_distribution <- function(x, sigma, n, type = c("density", "cumulative")) {
+get_sample_quasi_variance_distribution <- function(x, sigma, n, type = c("density", "cumulative")) {
   # 1. Validation
   type <- match.arg(type)
   stopifnot(is.numeric(x))
@@ -147,7 +147,7 @@ sample_quasi_variance_distribution <- function(x, sigma, n, type = c("density", 
 #' @param type Type of calculation: "density" for PDF height, "cumulative" for area (P(p_hat <= x)).
 #' @return Probability density or cumulative probability.
 #' @export
-sample_proportion_distribution <- function(x, p, n, type = c("density", "cumulative")) {
+get_sample_proportion_distribution <- function(x, p, n, type = c("density", "cumulative")) {
   # 1. Validation
   type <- match.arg(type)
   stopifnot(is.numeric(x))
@@ -187,7 +187,7 @@ sample_proportion_distribution <- function(x, p, n, type = c("density", "cumulat
 #'          Default is Inf (infinite population).
 #' @return The variance of the sample mean (numeric scalar).
 #' @export
-variance_of_sample_mean <- function(sigma_sq, n, N = Inf) {
+get_variance_of_sample_mean <- function(sigma_sq, n, N = Inf) {
   # 1. Validation
   stopifnot(is.numeric(sigma_sq), length(sigma_sq) == 1, sigma_sq > 0)
   stopifnot(is.numeric(n), length(n) == 1, n > 0)
@@ -242,7 +242,7 @@ variance_of_sample_mean <- function(sigma_sq, n, N = Inf) {
 #' exp <- c(196.9, 28.2, 62.7, 38.9, 5.5, 12.4, 106.0, 15.1, 33.7)
 #' chi_squared_test(obs, exp, lambda = 0.05)
 #' @export
-chi_squared_test <- function(observed, expected, lambda = 0.05) {
+test_chi_squared <- function(observed, expected, lambda = 0.05) {
   
   # 1. Validation
   if (length(observed) != length(expected)) {
@@ -297,7 +297,7 @@ chi_squared_test <- function(observed, expected, lambda = 0.05) {
 #' @param raw_data A numeric vector of raw observations.
 #' @return A numeric vector of expected counts based on histogram bins.
 #' @export
-get_expected_normal_counts <- function(raw_data) {
+get_expected_normaldistr_counts <- function(raw_data) {
   
   # 1. Clean data and estimate parameters
   data <- na.omit(raw_data)
@@ -348,7 +348,7 @@ get_expected_normal_counts <- function(raw_data) {
 #' # Matches logic from Slide 69 (Geiger counter example) [cite: 961]
 #' get_expected_poisson_counts(c(0, 1, 1, 2, 2, 2, 3))
 #' @export
-get_expected_poisson_counts <- function(raw_data) {
+get_expected_poissondistr_counts <- function(raw_data) {
   
   # 1. Setup
   data <- na.omit(raw_data)
@@ -386,7 +386,7 @@ get_expected_poisson_counts <- function(raw_data) {
 #' @param size The number of trials (n). If NULL, estimates 'n' as the maximum observed value.
 #' @return A numeric vector of expected counts.
 #' @export
-get_expected_binomial_counts <- function(raw_data, size = NULL) {
+get_expected_binomialdistr_counts <- function(raw_data, size = NULL) {
   
   # 1. Setup
   data <- na.omit(raw_data)
@@ -422,7 +422,7 @@ get_expected_binomial_counts <- function(raw_data, size = NULL) {
 #' @param alpha Significance level (default 0.05 for 95% confidence).
 #' @return A numeric vector of length 2: c(lower_bound, upper_bound).
 #' @export
-ci_mean_normal <- function(mean, sd, n, variance_known = FALSE, alpha = 0.05) {
+get_ci_mean_normal <- function(mean, sd, n, variance_known = FALSE, alpha = 0.05) {
   # Validation
   stopifnot(n > 0, sd > 0, alpha > 0, alpha < 1)
   
@@ -457,7 +457,7 @@ ci_mean_normal <- function(mean, sd, n, variance_known = FALSE, alpha = 0.05) {
 #' @param alpha Significance level (default 0.05).
 #' @return A numeric vector of length 2: c(lower_bound, upper_bound).
 #' @export
-ci_variance_normal <- function(s2, n, alpha = 0.05) {
+get_ci_variance_normal <- function(s2, n, alpha = 0.05) {
   stopifnot(n > 1, s2 >= 0)
   
   df <- n - 1
@@ -482,7 +482,7 @@ ci_variance_normal <- function(s2, n, alpha = 0.05) {
 #' @param alpha Significance level (default 0.05).
 #' @return A numeric vector of length 2.
 #' @export
-ci_proportion_binomial <- function(p_hat, n, alpha = 0.05) {
+get_ci_proportion_binomial <- function(p_hat, n, alpha = 0.05) {
   stopifnot(p_hat >= 0, p_hat <= 1, n > 0)
   
   # Critical Value (Z)
@@ -511,7 +511,7 @@ ci_proportion_binomial <- function(p_hat, n, alpha = 0.05) {
 #'        Assumes sigma1^2 = sigma2^2 (Pooled Variance).
 #' @param alpha Significance level.
 #' @export
-ci_diff_means <- function(mean1, mean2, sd1, sd2, n1, n2, 
+get_ci_diff_means <- function(mean1, mean2, sd1, sd2, n1, n2, 
                           variance_known = FALSE, var_equal = FALSE, alpha = 0.05) {
   
   diff_mean <- mean1 - mean2
@@ -568,7 +568,7 @@ ci_diff_means <- function(mean1, mean2, sd1, sd2, n1, n2,
 #' @param n1,n2 Sample sizes.
 #' @param alpha Significance level.
 #' @export
-ci_ratio_variances <- function(s1_sq, s2_sq, n1, n2, alpha = 0.05) {
+get_ci_ratio_variances <- function(s1_sq, s2_sq, n1, n2, alpha = 0.05) {
   stopifnot(s1_sq > 0, s2_sq > 0, n1 > 1, n2 > 1)
   
   ratio <- s1_sq / s2_sq
@@ -590,7 +590,7 @@ ci_ratio_variances <- function(s1_sq, s2_sq, n1, n2, alpha = 0.05) {
 #' @param n1,n2 Sample sizes.
 #' @param alpha Significance level.
 #' @export
-ci_diff_proportions <- function(p1, p2, n1, n2, alpha = 0.05) {
+get_ci_diff_proportions <- function(p1, p2, n1, n2, alpha = 0.05) {
   # Validation for large sample assumption mentioned in slide
   if (n1 + n2 <= 30) warning("Sample sum <= 30. Normal approximation may be inaccurate.")
   
@@ -603,4 +603,91 @@ ci_diff_proportions <- function(p1, p2, n1, n2, alpha = 0.05) {
   margin <- crit_val * se
   
   return(c(lower = diff_p - margin, upper = diff_p + margin))
+}
+#' Calculate Chi-Squared Statistic
+#'
+#' Calculates the test statistic (E) for a contingency table.
+#' Formula: Sum( (Observed - Expected)^2 / Expected )
+#'
+#' @param observed_matrix A numeric matrix of observed counts.
+#' @return A numeric scalar representing the calculated Chi-squared statistic.
+#' @export
+get_matrix_chi_squared_statistic <- function(observed_matrix) {
+  
+  # 1. Validation
+  if(!is.matrix(observed_matrix)) stop("Input must be a matrix.")
+  
+  # 2. Calculate Expected Values (e_ij)
+  row_totals <- rowSums(observed_matrix)
+  col_totals <- colSums(observed_matrix)
+  n <- sum(observed_matrix)
+  
+  # Outer product calculates (row_i * col_j) for all combinations
+  expected_matrix <- outer(row_totals, col_totals) / n
+  
+  # 3. Calculate the Statistic (Summation)
+  # Formula: Sum over all i, j of [ (o_ij - e_ij)^2 / e_ij ]
+  chi_squared_stat <- sum((observed_matrix - expected_matrix)^2 / expected_matrix)
+  
+  return(chi_squared_stat)
+}
+#' Calculate Expected Values Matrix
+#'
+#' Calculates the expected frequencies for a contingency table assuming
+#' independence between rows and columns (H0).
+#'
+#' @param observed_matrix A numeric matrix or table containing observed counts.
+#' @return A matrix of the same dimensions containing the expected values.
+#' @export
+get_matrix_expected_values <- function(observed_matrix) {
+  
+  # 1. Validation
+  if(!is.matrix(observed_matrix) && !is.table(observed_matrix)) {
+    stop("Input must be a matrix or a table.")
+  }
+  
+  # 2. Calculate Marginals (Row sums, Col sums, and Total n)
+  row_totals <- rowSums(observed_matrix)
+  col_totals <- colSums(observed_matrix)
+  n <- sum(observed_matrix)
+  
+  # 3. Calculate Expected Values
+  # Formula: (RowTotal * ColTotal) / n
+  # We use outer() to multiply every row sum by every col sum efficiently
+  expected_matrix <- outer(row_totals, col_totals) / n
+  
+  # 4. Check the condition from the image (e_ij > 5)
+  # The image states: "It must be verified that e_ij > 5"
+  if (any(expected_matrix <= 5)) {
+    warning("Condition failed: Some expected values are <= 5. ",
+            "The Chi-square approximation may be inaccurate.")
+  }
+  
+  return(expected_matrix)
+}
+#' Get Chi-Squared Critical Value
+#'
+#' Calculates the critical value (threshold) for the Chi-squared test
+#' based on the matrix dimensions and significance level alpha.
+#' Corresponds to: Chi2_alpha; (k-1)(m-1)
+#'
+#' @param observed_matrix A numeric matrix (to determine k and m).
+#' @param alpha Significance level (default is 0.05).
+#' @return The critical value from the Chi-squared distribution.
+#' @export
+get_matrix_chi_critical_value <- function(observed_matrix, alpha = 0.05) {
+  
+  # 1. Get dimensions (k = rows, m = columns)
+  k <- nrow(observed_matrix)
+  m <- ncol(observed_matrix)
+  
+  # 2. Calculate Degrees of Freedom
+  # Formula: (k - 1) * (m - 1)
+  df <- (k - 1) * (m - 1)
+  
+  # 3. Calculate Critical Value
+  # We use lower.tail = FALSE to get the value for the upper tail area (alpha)
+  critical_value <- qchisq(alpha, df = df, lower.tail = FALSE)
+  
+  return(critical_value)
 }
