@@ -11,7 +11,7 @@
 #' # Probability of getting exactly 5 heads in 10 flips of a fair coin
 #' discrete_binomial_distribution(n = 10, p = 0.5, x = 5)
 #' @export
-discrete_binomial_distribution <- function(n, p, x) {
+get_discrete_binomial_distribution <- function(n, p, x) {
   # 1. Validation of types and dimensions
   stopifnot(is.numeric(n), length(n) == 1)
   stopifnot(is.numeric(p), length(p) == 1)
@@ -38,7 +38,7 @@ discrete_binomial_distribution <- function(n, p, x) {
 #' # Probability that the first success happens exactly on the 3rd trial (p=0.5)
 #' discrete_geometric_distribution(p = 0.5, k = 3)
 #' @export
-discrete_geometric_distribution <- function(p, k) {
+get_discrete_geometric_distribution <- function(p, k) {
   # 1. Validation
   stopifnot(is.numeric(p), length(p) == 1)
   stopifnot(is.numeric(k), length(k) == 1)
@@ -65,7 +65,7 @@ discrete_geometric_distribution <- function(p, k) {
 #' # Probability of 3 emails arriving when the average is 5
 #' discrete_poisson_distribution(lambda = 5, x = 3)
 #' @export
-discrete_poisson_distribution <- function(lambda, x) {
+get_discrete_poisson_distribution <- function(lambda, x) {
   # 1. Validation
   stopifnot(is.numeric(lambda), length(lambda) == 1, lambda >= 0)
   stopifnot(is.numeric(x), length(x) == 1, x >= 0)
@@ -138,7 +138,7 @@ discrete_poisson_distribution <- function(lambda, x) {
 #' # Probability that X <= 1.96 (Area to the left, approx 0.975)
 #' standard_normal_distribution(1.96, type = "cumulative")
 #' @export
-standard_normal_distribution <- function(x, mean = 0, sd = 1, type = c("density", "cumulative")) {
+get_standard_normal_distribution <- function(x, mean = 0, sd = 1, type = c("density", "cumulative")) {
   # 1. Validation
   type <- match.arg(type)
   stopifnot(is.numeric(x))
@@ -179,7 +179,7 @@ standard_normal_distribution <- function(x, mean = 0, sd = 1, type = c("density"
 #' # Probability that t <= 2.228 with 10 df (approx 0.975)
 #' student_t_distribution(2.228, df = 10, type = "cumulative")
 #' @export
-student_t_distribution <- function(x, df, type = c("density", "cumulative")) {
+get_student_t_distribution <- function(x, df, type = c("density", "cumulative")) {
   # 1. Validation
   type <- match.arg(type)
   stopifnot(is.numeric(x))
